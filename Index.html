@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo de Tiro em Balões</title>
+  <style>
+    #canvas { background-color: #f0f0f0; border: 1px solid black; }
+    #jogo { display: none; text-align: center; }
+    #inicio { text-align: center; }
+    #placar { font-size: 20px; margin: 20px; }
+  </style>
+</head>
+<body>
+  <div id="inicio">
+    <button id="iniciar">Iniciar Jogo</button>
+  </div>
+  <div id="jogo">
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <p id="placar">Pontos: 0 | Balões perdidos: 0</p>
+  </div>
+  <script>
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let pontos = 0;
+    let baloesPerdidos = 0;
+    let imagens = [];
+    let velocidade = 2;
+    let gameInterval;
+    const maxBaloesPerdidos = 5;
+
+    // Carregar imagem do balão
+    let imagemBalao = new Image();
+    imagemBalao.src = 'balao.png';
+
+    // Função para criar imagens
+    function criarImagem() {
+      let x = Math.random() * (canvas.width - 50);
+      let y = canvas.height;
+      let velocidadeY = Math.random() * (velocidade * 2) + velocidade;
+      imagens.push({ x, y, velocidadeY });
+    }
+
+    // Função para atualizar a posição das imagens
+    function atualizarImagens() {
+      for (let i = 0; i < imagens.length; i++) {
+        imagens[i].y -= imagens[i].velocidadeY;
+        if (imagens[i].y < 0) {
+          imagens.splice(i, 1);
+          baloesPerdidos++;
+          if (baloesPerdidos > maxBaloesPerdidos) {
+            pararJogo();
+            alert("Jogo encerrado! Você deixou escapar muitos balões.");
+          }
+        }
+      }
+      atualizarPlacar();
+    }
+
+    // Função para desenhar as imagens
+    function desenharImagens() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < imagens.length; i++) {
+        ctx.drawImage(imagemBalao, imagens[i].x, imagens[i].y, 50, 50);
+      }
+    }
+
+    // Função para lidar com o clique do mouse
+    function clique(event) {
+      let x = event.clientX - canvas.offsetLeft;
+      let y = event.clientY - canvas.offsetTop;
+      for (let i = 0; i < imagens.length; i++) {
+        let distancia = Math.sqrt((x - imagens[i].x) ** 2 + (y - imagens[i].y) ** 2);
+        if (distancia < 25) {
+          pontos += Math.floor(imagens[i].velocidadeY / velocidade);
+          imagens.splice(i, 1);
+        }
+      }
+      atualizarPlacar();
+    }
+
+    // Função para atualizar o placar
+    function atualizarPlacar() {
+      document.getElementById('placar').innerHTML = `Pontos: ${pontos} | Balões perdidos: ${baloesPerdidos}`;
+    }
+
+    // Função para iniciar o jogo
+    function iniciarJogo() {
+      document.getElementById('inicio').style.display = 'none';
+      document.getElementById('jogo').style.display = 'block';
+      pontos = 0;
+      baloesPerdidos = 0;
+      atualizarPlacar();
+      gameInterval = setInterval(() => {
+        criarImagem();
+        atualizarImagens();
+        desenharImagens();
+      }, 1000 / 60);
+      canvas.addEventListener('click', clique);
+    }
+
+    // Função para parar o jogo
+    function pararJogo() {
+      clearInterval(gameInterval);
+      canvas.removeEventListener('click', clique);
+      document.getElementById('inicio').style.display = 'block';
+      document.getElementById('jogo').style.display = 'none';
+    }
+
+    document.getElementById('iniciar').addEventListener('click', iniciarJogo);
+  </script>
+</body>
+</html>
